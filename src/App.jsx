@@ -18,11 +18,11 @@ import AIPlans from "./components/AIPlans";
 import PlanContent from "./components/PlanContent";
 
 const NAV = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "goals", label: "Goals", icon: Target },
-  { id: "photos", label: "Photos", icon: Camera },
-  { id: "ai", label: "AI Plans", icon: Sparkles },
-  { id: "plan", label: "Program", icon: Dumbbell },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, title: "Performance Overview", desc: "Real-time physiological progress tracking." },
+  { id: "goals", label: "Goals", icon: Target, title: "Performance Objectives", desc: "Track your transformation and daily consistency." },
+  { id: "photos", label: "Photos", icon: Camera, title: "Visual Evolution", desc: "Your body composition, captured over time." },
+  { id: "ai", label: "AI Plans", icon: Sparkles, title: "AI Transformation Plans", desc: "Protocols engineered for your physiology." },
+  { id: "plan", label: "Program", icon: Dumbbell, title: "Elite Program", desc: "Your structured transformation protocol." },
 ];
 
 export default function App() {
@@ -129,23 +129,46 @@ export default function App() {
         <div className="fixed inset-0 z-30 bg-black/70 lg:hidden" onClick={() => setNavOpen(false)} />
       )}
 
-      <main className="min-h-screen bg-base-bg">
-        <header className="sticky top-0 z-20 flex items-center gap-3 px-4 sm:px-6 py-3 bg-base-bg/95 border-b border-base-border">
-          <button className="lg:hidden text-text-secondary" onClick={() => setNavOpen(true)}>
-            <Menu size={22} />
-          </button>
-          <h1 className="font-semibold text-base text-text-primary">
-            {NAV.find((n) => n.id === view)?.label}
-          </h1>
+      <main className="relative min-h-screen bg-base-bg overflow-hidden">
+        {/* ambient glow */}
+        <div className="pointer-events-none absolute -top-40 -right-40 w-[480px] h-[480px] rounded-full bg-accent/10 blur-[120px]" />
+        <div className="pointer-events-none absolute top-1/3 -left-40 w-[360px] h-[360px] rounded-full bg-accent/5 blur-[120px]" />
+
+        <header className="sticky top-0 z-20 flex items-center justify-between gap-3 px-4 sm:px-6 h-16 bg-base-bg/80 backdrop-blur-md border-b border-base-border">
+          <div className="flex items-center gap-3">
+            <button className="lg:hidden text-text-secondary" onClick={() => setNavOpen(true)}>
+              <Menu size={22} />
+            </button>
+            <h2 className="font-semibold text-base text-text-primary">
+              {NAV.find((n) => n.id === view)?.label}
+            </h2>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full border border-base-border bg-base-surface">
+            <span className={`w-1.5 h-1.5 rounded-full ${user ? "bg-accent animate-pulse" : "bg-amber-400"}`} />
+            <span className="text-text-secondary">{user ? "Synced" : "Guest"}</span>
+          </div>
         </header>
 
-        {authError && needsAuth && (
-          <div className="mx-4 sm:mx-6 mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-200 text-sm px-4 py-3">
-            Cloud sync is off: enable <strong>Anonymous sign-ins</strong> in Supabase Auth → Providers to save your data.
-          </div>
-        )}
+        <div className="relative p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto animate-fade-up">
+          {/* page hero */}
+          {(() => {
+            const meta = NAV.find((n) => n.id === view);
+            return (
+              <div className="mb-7">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary">{meta?.title}</h1>
+                <p className="text-text-secondary mt-1.5 max-w-2xl">{meta?.desc}</p>
+              </div>
+            );
+          })()}
 
-        <div className="p-4 sm:p-6 max-w-5xl mx-auto animate-fade-up">{renderView()}</div>
+          {authError && needsAuth && (
+            <div className="mb-5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-200 text-sm px-4 py-3">
+              Cloud sync is off: enable <strong>Anonymous sign-ins</strong> in Supabase Auth → Providers to save your data.
+            </div>
+          )}
+
+          {renderView()}
+        </div>
       </main>
     </div>
   );

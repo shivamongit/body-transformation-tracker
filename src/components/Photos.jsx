@@ -98,8 +98,8 @@ export default function Photos({ user }) {
               <ImageIcon size={16} />
             </div>
             <div>
-              <h2 className="section-title">Visual Evolution</h2>
-              <p className="section-subtitle">Your progress, captured over time.</p>
+              <h2 className="section-title">Your Gallery</h2>
+              <p className="section-subtitle">Tap a filter to narrow by pose.</p>
             </div>
           </div>
           <div className="flex bg-base-lowest p-1 rounded-lg border border-base-border self-start">

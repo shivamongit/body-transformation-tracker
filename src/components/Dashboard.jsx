@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
@@ -22,12 +22,12 @@ import { profile } from "../data/plan";
 import { StatCard, SectionTitle, Spinner, Toast, Empty } from "./ui";
 
 const CHECKS = [
-  { key: "workout", label: "Completed workout" },
-  { key: "protein", label: "Hit protein (180-200g)" },
-  { key: "steps", label: "Hit step goal" },
-  { key: "posture", label: "Posture routine" },
-  { key: "diet", label: "Stayed in deficit" },
-  { key: "sleep", label: "Slept 7-8 hours" },
+  { key: "workout", label: "Completed workout", short: "Workout" },
+  { key: "protein", label: "Hit protein (180-200g)", short: "Protein" },
+  { key: "steps", label: "Hit step goal", short: "Steps" },
+  { key: "posture", label: "Posture routine", short: "Posture" },
+  { key: "diet", label: "Stayed in deficit", short: "Diet" },
+  { key: "sleep", label: "Slept 7-8 hours", short: "Sleep" },
 ];
 
 const WORKOUTS = [
@@ -153,79 +153,88 @@ export default function Dashboard({ user }) {
           chip="REMAINING" chipTone="error" />
       </div>
 
-      <div className="card">
-        <SectionTitle icon={CalendarCheck} title="Today's Check-in" subtitle={todayStr()} />
-        <div className="grid sm:grid-cols-2 gap-3">
-          <div>
-            <label className="label">Weight (kg)</label>
-            <input className="input" type="number" step="0.1" placeholder="e.g. 93.5"
-              value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="card lg:col-span-2 flex flex-col">
+          <SectionTitle icon={TrendingDown} title="Weight Trend"
+            subtitle="Progress toward your goal weight" />
+          {chartData.length ? (
+            <div className="flex-grow h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="weightFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#22c55e" stopOpacity={0.25} />
+                      <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#26262f" vertical={false} />
+                  <XAxis dataKey="date" stroke="#869585" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#869585" fontSize={12} domain={["auto", "auto"]} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ background: "#161d16", border: "1px solid #26262f", borderRadius: 8, color: "#dce5d9" }} />
+                  <ReferenceLine y={profile.goalWeight} stroke="#4be277" strokeDasharray="4 4"
+                    label={{ value: `Goal ${profile.goalWeight}`, fill: "#4be277", fontSize: 11, position: "insideTopRight" }} />
+                  <Area type="monotone" dataKey="weight" stroke="#22c55e" strokeWidth={2.5}
+                    fill="url(#weightFill)" dot={{ r: 3, fill: "#22c55e" }} activeDot={{ r: 5 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <Empty icon={Scale} title="No weigh-ins yet" hint="Log your weight to see your trend." />
+          )}
+        </div>
+
+        <div className="card">
+          <SectionTitle icon={CalendarCheck} title="Daily Check-in" subtitle={todayStr()} />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Weight (kg)</label>
+              <input className="input" type="number" step="0.1" placeholder="93.5"
+                value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} />
+            </div>
+            <div>
+              <label className="label">Waist (cm)</label>
+              <input className="input" type="number" step="0.1" placeholder="92"
+                value={form.waist} onChange={(e) => setForm({ ...form, waist: e.target.value })} />
+            </div>
           </div>
-          <div>
-            <label className="label">Waist (cm) — optional</label>
-            <input className="input" type="number" step="0.1" placeholder="e.g. 92"
-              value={form.waist} onChange={(e) => setForm({ ...form, waist: e.target.value })} />
+
+          <div className="mt-3">
+            <label className="label">Today's Workout</label>
+            <select className="input" value={form.workout_name}
+              onChange={(e) => setForm({ ...form, workout_name: e.target.value })}>
+              <option value="">Select session</option>
+              {WORKOUTS.map((w) => <option key={w}>{w}</option>)}
+            </select>
           </div>
-        </div>
 
-        <div className="mt-3">
-          <label className="label">Today's Workout</label>
-          <select className="input" value={form.workout_name}
-            onChange={(e) => setForm({ ...form, workout_name: e.target.value })}>
-            <option value="">Select session</option>
-            {WORKOUTS.map((w) => <option key={w}>{w}</option>)}
-          </select>
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-2 mt-4">
-          {CHECKS.map((c) => {
-            const on = !!form.checks[c.key];
-            return (
-              <button key={c.key} onClick={() => toggle(c.key)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-left text-sm transition-colors ${
-                  on ? "border-accent bg-accent/10 text-accent-text"
-                    : "border-base-border bg-base-bg text-text-secondary hover:border-base-hover"
-                }`}>
-                <span className={`grid place-items-center w-5 h-5 rounded border ${
-                  on ? "bg-accent border-accent text-accent-on" : "border-base-border"
-                }`}>{on ? "✓" : ""}</span>
-                {c.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="mt-3">
-          <label className="label">Notes — optional</label>
-          <textarea className="input" rows={2} placeholder="Energy, lifts hit, how you felt…"
-            value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-        </div>
-
-        <button className="btn-primary w-full mt-4" onClick={save} disabled={saving}>
-          {saving ? <Spinner /> : <Save size={18} />} Save Log
-        </button>
-      </div>
-
-      <div className="card">
-        <SectionTitle icon={TrendingDown} title="Weight Trend" />
-        {chartData.length ? (
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#26262f" />
-                <XAxis dataKey="date" stroke="#869585" fontSize={12} />
-                <YAxis stroke="#869585" fontSize={12} domain={["auto", "auto"]} />
-                <Tooltip contentStyle={{ background: "#161d16", border: "1px solid #26262f", borderRadius: 8, color: "#dce5d9" }} />
-                <ReferenceLine y={profile.goalWeight} stroke="#4be277" strokeDasharray="4 4"
-                  label={{ value: `Goal ${profile.goalWeight}`, fill: "#4be277", fontSize: 11, position: "insideTopRight" }} />
-                <Line type="monotone" dataKey="weight" stroke="#22c55e" strokeWidth={2}
-                  dot={{ r: 3, fill: "#22c55e" }} activeDot={{ r: 5 }} />
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="mt-4">
+            <label className="label">Habit Completion</label>
+            <div className="flex flex-wrap gap-2">
+              {CHECKS.map((c) => {
+                const on = !!form.checks[c.key];
+                return (
+                  <button key={c.key} onClick={() => toggle(c.key)} type="button"
+                    className={`px-3 py-1.5 rounded-full border text-xs font-bold transition-all ${
+                      on ? "border-accent bg-accent/10 text-accent"
+                        : "border-base-border text-text-secondary hover:border-text-muted"
+                    }`}>
+                    {c.short || c.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        ) : (
-          <Empty icon={Scale} title="No weigh-ins yet" hint="Log your weight above to see your trend." />
-        )}
+
+          <div className="mt-3">
+            <label className="label">Notes</label>
+            <textarea className="input" rows={2} placeholder="Energy, lifts, how you felt…"
+              value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+          </div>
+
+          <button className="btn-primary w-full mt-4" onClick={save} disabled={saving}>
+            {saving ? <Spinner /> : <Save size={18} />} Save Daily Entry
+          </button>
+        </div>
       </div>
 
       <div className="card">
