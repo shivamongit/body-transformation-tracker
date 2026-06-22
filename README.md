@@ -1,95 +1,126 @@
-# Body Transformation Tracker
+<div align="center">
 
-A 4-month body transformation roadmap with a built-in daily logging dashboard:
-login, log your weight + workout check-ins, see your weight-trend chart, and a
-workout streak — all synced across every device via Supabase.
+# 🔥 FORGE — My Body Transformation Tracker
 
-The app is a static site (HTML + JS + CDN libraries). No build step.
+**A modern, AI-powered fitness web app I built to track my own 4-month body recomposition.**
 
----
+Log daily weight & workouts · set goals · upload progress photos · generate
+new training plans with AI — all synced to the cloud and usable from any device.
 
-## 1. Set up Supabase (the database + login) — ~3 min
+`React` · `Vite` · `Tailwind CSS` · `Supabase` · `OpenAI` · `Recharts`
 
-1. Go to <https://supabase.com> and create a free account + new project.
-2. Wait for the project to finish provisioning.
-3. In the project, open **SQL Editor → New query**, paste the contents of
-   [`schema.sql`](./schema.sql), and click **Run**. This creates the
-   `daily_logs` table and security rules.
-4. Open **Project Settings → API** and copy:
-   - **Project URL**
-   - **anon public** key
-5. Open [`config.js`](./config.js) and paste both values:
-   ```js
-   window.SUPABASE_URL = "https://xxxx.supabase.co";
-   window.SUPABASE_ANON_KEY = "eyJhbGciOi...";
-   ```
-6. (Optional) In Supabase **Authentication → Providers → Email**, turn **OFF**
-   "Confirm email" if you want to log in instantly without email verification.
+</div>
 
 ---
 
-## 2. Push to GitHub
+## ✨ Features
 
-From this `body/` folder:
+- **Dashboard** — daily check-in (weight, waist, workout, 6 habit toggles, notes), live stats, weight-trend chart, and a workout streak counter.
+- **Goals** — set target weight / waist / body-fat / habit goals with deadlines and tick them off.
+- **Progress Photos** — upload photos by pose & date to build a visual timeline (Supabase Storage).
+- **AI Plan Generator** — generates a personalized, evidence-based training plan via OpenAI, tuned to my goal, split, equipment and weak points. The API key stays server-side in a Supabase Edge Function (never exposed to the browser).
+- **My Program** — the full photo analysis, priority ranking, 4-month roadmap, day-by-day workout, and diet plan.
+- **Guest mode** — no login screen. An anonymous Supabase session is created automatically, and data syncs via the cloud.
+
+---
+
+## 🧱 Tech Stack
+
+| Layer | Tech |
+|-------|------|
+| Frontend | React 18 + Vite |
+| Styling | Tailwind CSS (custom glassmorphism design system) |
+| Charts | Recharts |
+| Icons | Lucide |
+| Backend / DB / Auth / Storage | Supabase |
+| AI | OpenAI (via Supabase Edge Function) |
+| Hosting | Render |
+
+---
+
+## 🚀 Run Locally
 
 ```bash
-git init
-git add .
-git commit -m "Body transformation tracker"
-git branch -M main
-# create an empty repo on github.com first, then:
-git remote add origin https://github.com/<your-username>/<repo-name>.git
-git push -u origin main
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # production build → dist/
 ```
 
-> `config.js` is committed on purpose — the Supabase anon key is safe to expose
-> in the browser (Row Level Security protects your data). Do **not** put any
-> service-role/secret keys here.
+Supabase keys are read from `import.meta.env.VITE_SUPABASE_*` with safe public
+fallbacks baked in, so it runs out of the box. To override, copy `.env.example`
+to `.env`.
 
 ---
 
-## 3. Deploy to Render
+## ⚙️ Backend Setup (Supabase)
+
+1. **Database** — open **SQL Editor → New query**, paste [`schema.sql`](./schema.sql), and **Run**. This creates the `daily_logs`, `goals`, `photos`, and `ai_plans` tables with row-level security, plus the `progress-photos` storage bucket and its policies.
+2. **Guest login** — go to **Authentication → Providers** and enable **Anonymous sign-ins**.
+3. **Storage** — the schema creates the public `progress-photos` bucket automatically. (If your project blocks bucket creation via SQL, create it manually as a **public** bucket of the same name.)
+
+---
+
+## 🤖 AI Setup (secure OpenAI key)
+
+The OpenAI key is **never** in the frontend. It lives in a Supabase Edge Function.
+
+```bash
+# one-time
+npm i -g supabase
+supabase login
+supabase link --project-ref tipfzlfrbpeybvupqebn
+
+# set the secret key (server-side only)
+supabase secrets set OPENAI_API_KEY=sk-your-key
+
+# deploy the function
+supabase functions deploy generate-plan
+```
+
+The app calls it through `supabase.functions.invoke("generate-plan")`.
+Optionally set `OPENAI_MODEL` (defaults to `gpt-4o-mini`).
+
+---
+
+## ☁️ Deploy to Render
 
 The repo includes [`render.yaml`](./render.yaml) so Render auto-configures it.
 
-1. Go to <https://render.com> and log in with GitHub.
-2. **New → Static Site** and connect your repo.
-3. Render reads `render.yaml` automatically. If asked manually:
-   - **Build Command**: leave empty
-   - **Publish Directory**: `.` (or `body` if you pushed the whole `maaq` repo)
-4. Click **Create Static Site**.
+1. Push to GitHub, then on **render.com** → **New → Static Site** and connect the repo.
+2. Render reads `render.yaml`. If asked manually:
+   - **Build Command:** `npm ci && npm run build`
+   - **Publish Directory:** `dist`
+3. **Create Static Site.** Every push to `main` auto-deploys.
 
-Your site will be live at `https://<your-site>.onrender.com` and the home page
-opens the roadmap. Tap **📈 My Log** to sign up / log in.
-
-> The `routes` rewrite in `render.yaml` serves `transformation.html` at the
-> root URL. Every push to `main` auto-deploys.
+> Tip: open the Render URL on your phone and **Add to Home Screen** for an app-like icon.
 
 ---
 
-## 4. Use it from your phone
+## 📁 Project Structure
 
-Open the Render URL on your phone and **Add to Home Screen** for an app-like
-shortcut. Log in with the same email/password and your data appears everywhere.
+```
+src/
+  App.jsx                # layout + sidebar navigation
+  lib/
+    supabase.js          # client + anonymous guest session
+    db.js                # data access (logs, goals, photos, plans)
+  data/plan.js           # my analysis, roadmap, workout & diet content
+  components/
+    Dashboard.jsx        # daily check-in, stats, weight chart, history
+    Goals.jsx            # goals CRUD
+    Photos.jsx           # progress photo upload + gallery
+    AIPlans.jsx          # AI plan generator + saved plans
+    PlanContent.jsx      # analysis / roadmap / workout / diet
+    ui.jsx               # shared UI primitives
+supabase/functions/generate-plan/  # OpenAI edge function
+schema.sql               # database + storage setup
+```
 
 ---
 
-## Files
+## 🩺 Troubleshooting
 
-| File | Purpose |
-|------|---------|
-| `transformation.html` | The full app UI (roadmap, workout, diet, My Log dashboard) |
-| `app.js` | Auth + daily logging + chart logic |
-| `config.js` | Your Supabase keys (you fill these in) |
-| `schema.sql` | Database table + security policies |
-| `render.yaml` | Serves the app at the root URL on Render |
-| `IMG_*.PNG` | Your progress photos |
-
----
-
-## Troubleshooting
-
-- **"Supabase is not configured"** banner → you haven't filled in `config.js`.
-- **Login works but logs don't save** → make sure you ran `schema.sql`.
-- **"Email not confirmed"** → either confirm via the email link, or disable
-  email confirmation in Supabase Auth settings.
+- **"Connection error" on load** → enable **Anonymous sign-ins** in Supabase Auth.
+- **Logs/goals don't save** → run `schema.sql`.
+- **Photo upload fails** → ensure the public `progress-photos` bucket + storage policies exist (in `schema.sql`).
+- **AI generation fails** → deploy the `generate-plan` function and set `OPENAI_API_KEY`.

@@ -49,3 +49,77 @@ create policy "own rows - update" on public.daily_logs
 drop policy if exists "own rows - delete" on public.daily_logs;
 create policy "own rows - delete" on public.daily_logs
   for delete using (auth.uid() = user_id);
+
+-- ============================================================
+--  Goals
+-- ============================================================
+create table if not exists public.goals (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null references auth.users(id) on delete cascade,
+  title         text not null,
+  type          text default 'weight',
+  target_value  numeric,
+  deadline      date,
+  achieved      boolean default false,
+  created_at    timestamptz default now()
+);
+alter table public.goals enable row level security;
+drop policy if exists "goals owner" on public.goals;
+create policy "goals owner" on public.goals
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ============================================================
+--  Progress photos (metadata; files live in Storage bucket)
+-- ============================================================
+create table if not exists public.photos (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null references auth.users(id) on delete cascade,
+  storage_path  text not null,
+  pose          text,
+  weight        numeric,
+  taken_on      date default current_date,
+  note          text,
+  created_at    timestamptz default now()
+);
+alter table public.photos enable row level security;
+drop policy if exists "photos owner" on public.photos;
+create policy "photos owner" on public.photos
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ============================================================
+--  AI-generated plans
+-- ============================================================
+create table if not exists public.ai_plans (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null references auth.users(id) on delete cascade,
+  title         text not null,
+  params        jsonb default '{}'::jsonb,
+  content       text,
+  created_at    timestamptz default now()
+);
+alter table public.ai_plans enable row level security;
+drop policy if exists "ai_plans owner" on public.ai_plans;
+create policy "ai_plans owner" on public.ai_plans
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ============================================================
+--  Storage bucket policies for progress photos
+--  (Run after creating a PUBLIC bucket named 'progress-photos')
+-- ============================================================
+insert into storage.buckets (id, name, public)
+values ('progress-photos', 'progress-photos', true)
+on conflict (id) do nothing;
+
+drop policy if exists "photo upload own folder" on storage.objects;
+create policy "photo upload own folder" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'progress-photos' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "photo read public" on storage.objects;
+create policy "photo read public" on storage.objects
+  for select using (bucket_id = 'progress-photos');
+
+drop policy if exists "photo delete own" on storage.objects;
+create policy "photo delete own" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'progress-photos' and (storage.foldername(name))[1] = auth.uid()::text);
