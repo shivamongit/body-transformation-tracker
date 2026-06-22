@@ -10,18 +10,15 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-ink-950 text-slate-100 font-sans antialiased;
-    background-image:
-      radial-gradient(60rem 60rem at 110% -10%, rgba(74, 222, 128, 0.07), transparent 60%),
-      radial-gradient(50rem 50rem at -10% 10%, rgba(96, 165, 250, 0.07), transparent 55%);
-    background-attachment: fixed;
+    @apply bg-base-bg text-text-primary font-sans antialiased;
+    line-height: 1.5;
   }
   ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-ink-600 rounded-full;
+    @apply bg-base-border rounded-full;
   }
   ::-webkit-scrollbar-track {
     @apply bg-transparent;
@@ -29,34 +26,34 @@
 }
 
 @layer components {
-  .glass {
-    @apply bg-ink-800/70 backdrop-blur-xl border border-white/5 rounded-2xl;
-  }
   .card {
-    @apply glass shadow-card p-5 sm:p-6;
+    @apply bg-base-surface border border-base-border rounded-xl p-5 sm:p-6;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 font-semibold text-sm transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 font-bold text-sm transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
   }
   .btn-primary {
-    @apply btn bg-grad-accent text-ink-950 shadow-glow hover:brightness-105;
+    @apply btn bg-accent text-accent-on hover:bg-accent-hover hover:shadow-glow;
   }
   .btn-ghost {
-    @apply btn bg-white/5 text-slate-200 border border-white/10 hover:bg-white/10;
+    @apply btn bg-base-elevated text-text-primary border border-base-border hover:bg-base-hover font-medium;
   }
   .btn-danger {
-    @apply btn bg-transparent text-red-400 border border-red-500/40 hover:bg-red-500/10;
+    @apply btn bg-transparent text-red-400 border border-red-500/30 hover:bg-red-500/10 font-medium;
   }
   .input {
-    @apply w-full rounded-xl bg-ink-950/60 border border-white/10 px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20 transition;
+    @apply w-full rounded-lg bg-base-lowest border border-base-border px-3.5 py-2.5 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-accent focus:ring-1 focus:ring-accent/20 transition;
   }
   .label {
-    @apply block text-xs font-medium uppercase tracking-wider text-slate-400 mb-1.5;
+    @apply block text-[11px] font-bold uppercase tracking-wider text-text-secondary mb-1.5;
   }
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+    @apply inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium;
   }
-  .gradient-text {
-    @apply bg-grad-accent bg-clip-text text-transparent;
+  .section-title {
+    @apply text-lg font-semibold text-text-primary tracking-tight;
+  }
+  .section-subtitle {
+    @apply text-sm text-text-secondary;
   }
 }

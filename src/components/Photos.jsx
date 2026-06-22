@@ -1,17 +1,24 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Camera, Upload, Trash2, ImageIcon } from "lucide-react";
 import { fetchPhotos, uploadPhoto, photoUrl, deletePhoto, todayStr } from "../lib/db";
 import { SectionTitle, Spinner, Toast, Empty } from "./ui";
 
 const POSES = ["Front", "Side (Left)", "Side (Right)", "Back", "Back-Angle", "Other"];
+const FILTERS = ["All", "Front", "Side", "Back"];
 
 export default function Photos({ user }) {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [filter, setFilter] = useState("All");
   const [meta, setMeta] = useState({ pose: "Front", weight: "", taken_on: todayStr() });
   const fileRef = useRef();
+
+  const filtered = useMemo(() => {
+    if (filter === "All") return photos;
+    return photos.filter((p) => (p.pose || "").toLowerCase().includes(filter.toLowerCase()));
+  }, [photos, filter]);
 
   const toast = (text, type = "info") => {
     setMsg({ text, type });
@@ -35,7 +42,7 @@ export default function Photos({ user }) {
         weight: meta.weight === "" ? null : Number(meta.weight),
         taken_on: meta.taken_on,
       });
-      toast("Photo uploaded 📸", "success");
+      toast("Photo uploaded", "success");
       load();
     } catch (e) {
       toast(e.message.includes("Bucket") ? "Create a public 'progress-photos' storage bucket in Supabase first." : e.message, "error");
@@ -68,8 +75,7 @@ export default function Photos({ user }) {
           <div>
             <label className="label">Weight (kg)</label>
             <input className="input" type="number" step="0.1" placeholder="optional"
-              value={meta.weight}
-              onChange={(e) => setMeta({ ...meta, weight: e.target.value })} />
+              value={meta.weight} onChange={(e) => setMeta({ ...meta, weight: e.target.value })} />
           </div>
           <div>
             <label className="label">Date</label>
@@ -81,24 +87,53 @@ export default function Photos({ user }) {
         <button className="btn-primary w-full mt-4" disabled={uploading}
           onClick={() => fileRef.current?.click()}>
           {uploading ? <Spinner /> : <Upload size={18} />}
-          {uploading ? "Uploading…" : "Choose & Upload Photo"}
+          {uploading ? "Uploading…" : "Upload Photo"}
         </button>
       </div>
 
       <div className="card">
-        <SectionTitle icon={ImageIcon} title="Your Gallery" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+          <div className="flex items-center gap-2.5">
+            <div className="grid place-items-center w-8 h-8 rounded-lg bg-accent text-accent-on shadow-glow">
+              <ImageIcon size={16} />
+            </div>
+            <div>
+              <h2 className="section-title">Visual Evolution</h2>
+              <p className="section-subtitle">Your progress, captured over time.</p>
+            </div>
+          </div>
+          <div className="flex bg-base-lowest p-1 rounded-lg border border-base-border self-start">
+            {FILTERS.map((f) => (
+              <button key={f} onClick={() => setFilter(f)}
+                className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
+                  filter === f ? "bg-accent text-accent-on" : "text-text-secondary hover:text-text-primary"
+                }`}>
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {loading ? (
-          <div className="flex items-center gap-2 text-slate-400"><Spinner /> Loading…</div>
-        ) : photos.length ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {photos.map((p) => (
-              <div key={p.id} className="group relative rounded-xl overflow-hidden border border-white/10">
+          <div className="flex items-center gap-2 text-text-secondary"><Spinner /> Loading…</div>
+        ) : filtered.length ? (
+          <div className="columns-2 sm:columns-3 gap-3 [column-fill:_balance]">
+            {filtered.map((p) => (
+              <div key={p.id}
+                className="group relative mb-3 break-inside-avoid rounded-xl overflow-hidden border border-base-border bg-base-surface transition-all hover:scale-[1.02] hover:z-10">
                 <img src={photoUrl(p.storage_path)} alt={p.pose}
-                  className="w-full aspect-[3/4] object-cover" loading="lazy" />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 text-xs">
-                  <div className="font-semibold">{p.pose}</div>
-                  <div className="text-slate-300">
-                    {p.taken_on}{p.weight != null ? ` · ${p.weight} kg` : ""}
+                  className="w-full h-auto object-cover" loading="lazy" />
+                <div className="absolute inset-0 flex flex-col justify-end p-4 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex justify-between items-end gap-2">
+                    <div className="min-w-0">
+                      <p className="text-white font-semibold text-sm">{p.taken_on}</p>
+                      <span className="inline-block mt-1 px-2 py-0.5 rounded bg-accent/15 text-accent text-[10px] font-bold uppercase tracking-widest border border-accent/25">
+                        {p.pose}
+                      </span>
+                    </div>
+                    {p.weight != null && (
+                      <p className="text-accent font-bold text-sm shrink-0">{p.weight} kg</p>
+                    )}
                   </div>
                 </div>
                 <button onClick={() => remove(p)}
@@ -109,8 +144,8 @@ export default function Photos({ user }) {
             ))}
           </div>
         ) : (
-          <Empty icon={Camera} title="No photos yet"
-            hint="Upload your first progress photo to build a visual timeline." />
+          <Empty icon={Camera} title={photos.length ? "No photos in this view" : "No photos yet"}
+            hint={photos.length ? "Try a different filter." : "Upload your first progress photo."} />
         )}
       </div>
     </div>

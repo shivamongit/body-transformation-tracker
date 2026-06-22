@@ -47,7 +47,7 @@ export default function AIPlans({ user }) {
         params: form,
         content: typeof content === "string" ? content : JSON.stringify(content, null, 2),
       });
-      toast("Plan generated ✨", "success");
+      toast("Plan generated", "success");
       load();
     } catch (e) {
       toast(
@@ -70,8 +70,7 @@ export default function AIPlans({ user }) {
     <div className="space-y-6">
       <Toast msg={msg} />
 
-      <div className="card relative overflow-hidden">
-        <div className="absolute -top-16 -right-16 w-48 h-48 bg-grad-purple opacity-20 blur-3xl rounded-full" />
+      <div className="card">
         <SectionTitle icon={Sparkles} title="Generate a New Plan with AI"
           subtitle="Powered by OpenAI — tailored to your body, goal, and schedule." />
 
@@ -117,7 +116,7 @@ export default function AIPlans({ user }) {
               onChange={(e) => setForm({ ...form, focus: e.target.value })} />
           </div>
           <div className="sm:col-span-2">
-            <label className="label">Extra notes — injuries, preferences…</label>
+            <label className="label">Extra notes</label>
             <textarea className="input" rows={2} value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </div>
@@ -125,35 +124,35 @@ export default function AIPlans({ user }) {
 
         <button className="btn-primary w-full mt-4" onClick={generate} disabled={busy}>
           {busy ? <Spinner /> : <Wand2 size={18} />}
-          {busy ? "Generating your plan…" : "Generate Plan"}
+          {busy ? "Generating…" : "Generate Plan"}
         </button>
       </div>
 
       <div className="card">
         <SectionTitle icon={Sparkles} title="Saved AI Plans" />
         {loading ? (
-          <div className="flex items-center gap-2 text-slate-400"><Spinner /> Loading…</div>
+          <div className="flex items-center gap-2 text-text-secondary"><Spinner /> Loading…</div>
         ) : plans.length ? (
           <div className="space-y-2">
             {plans.map((p) => (
-              <div key={p.id} className="rounded-xl border border-white/10 bg-ink-950/60">
+              <div key={p.id} className="rounded-lg border border-base-border bg-base-bg">
                 <button
                   onClick={() => setOpen(open === p.id ? null : p.id)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left">
-                  <Sparkles size={16} className="text-brand-purple shrink-0" />
+                  <Sparkles size={16} className="text-accent shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <div className="font-semibold truncate">{p.title}</div>
-                    <div className="text-xs text-slate-500">
+                    <div className="font-medium text-text-primary truncate">{p.title}</div>
+                    <div className="text-xs text-text-muted">
                       {new Date(p.created_at).toLocaleDateString()}
                     </div>
                   </div>
                   <button onClick={(e) => { e.stopPropagation(); remove(p.id); }}
-                    className="text-slate-500 hover:text-red-400"><Trash2 size={16} /></button>
+                    className="text-text-muted hover:text-red-400"><Trash2 size={16} /></button>
                   <ChevronDown size={18}
-                    className={`text-slate-500 transition ${open === p.id ? "rotate-180" : ""}`} />
+                    className={`text-text-muted transition ${open === p.id ? "rotate-180" : ""}`} />
                 </button>
                 {open === p.id && (
-                  <pre className="px-4 pb-4 text-sm text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">
+                  <pre className="px-4 pb-4 text-sm text-text-secondary whitespace-pre-wrap font-sans leading-relaxed">
                     {p.content}
                   </pre>
                 )}
@@ -161,8 +160,7 @@ export default function AIPlans({ user }) {
             ))}
           </div>
         ) : (
-          <Empty icon={Sparkles} title="No AI plans yet"
-            hint="Fill the form above and generate your first personalized plan." />
+          <Empty icon={Sparkles} title="No AI plans yet" hint="Fill the form above and generate your first plan." />
         )}
       </div>
     </div>
