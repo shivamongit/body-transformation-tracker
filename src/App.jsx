@@ -29,48 +29,61 @@ const NAV = [
 
 export default function App() {
   const [user, setUser] = useState(null);
-  const [error, setError] = useState(null);
+  const [authError, setAuthError] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [view, setView] = useState("dashboard");
   const [navOpen, setNavOpen] = useState(false);
 
   useEffect(() => {
     ensureGuestSession()
-      .then(setUser)
-      .catch((e) => setError(e.message));
+      .then((u) => setUser(u))
+      .catch((e) => setAuthError(e?.message || String(e)))
+      .finally(() => setAuthLoading(false));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (session) setUser(session.user);
+      if (session) {
+        setUser(session.user);
+        setAuthError(null);
+      }
     });
     return () => sub.subscription.unsubscribe();
   }, []);
-
-  if (error) {
-    return (
-      <div className="min-h-screen grid place-items-center p-6">
-        <div className="card max-w-md text-center">
-          <h1 className="text-lg font-bold text-red-400 mb-2">Connection error</h1>
-          <p className="text-sm text-slate-400">{error}</p>
-          <p className="text-xs text-slate-500 mt-3">
-            Make sure anonymous sign-ins are enabled in Supabase → Authentication → Providers.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen grid place-items-center">
-        <div className="flex items-center gap-3 text-slate-400">
-          <Spinner /> Starting your session…
-        </div>
-      </div>
-    );
-  }
 
   const go = (id) => {
     setView(id);
     setNavOpen(false);
   };
+
+  // Views that require a signed-in (guest) session to read/write data.
+  const needsAuth = view !== "plan";
+
+  function renderView() {
+    if (view === "plan") return <PlanContent />;
+    if (authLoading)
+      return (
+        <div className="flex items-center gap-3 text-slate-400 py-16 justify-center">
+          <Spinner /> Connecting to your account…
+        </div>
+      );
+    if (!user)
+      return (
+        <div className="card max-w-lg mx-auto text-center">
+          <h2 className="text-lg font-bold text-amber-400 mb-2">Guest sign-in unavailable</h2>
+          <p className="text-sm text-slate-400">{authError}</p>
+          <p className="text-xs text-slate-500 mt-3">
+            Enable <strong>Anonymous sign-ins</strong> in Supabase → Authentication →
+            Providers, then reload. You can still browse <strong>My Program</strong> meanwhile.
+          </p>
+          <button className="btn-primary mt-4" onClick={() => go("plan")}>
+            View My Program
+          </button>
+        </div>
+      );
+    if (view === "dashboard") return <Dashboard user={user} />;
+    if (view === "goals") return <Goals user={user} />;
+    if (view === "photos") return <Photos user={user} />;
+    if (view === "ai") return <AIPlans user={user} />;
+    return null;
+  }
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
@@ -155,13 +168,13 @@ export default function App() {
           </h1>
         </header>
 
-        <div className="p-4 sm:p-6 max-w-5xl mx-auto animate-fade-up">
-          {view === "dashboard" && <Dashboard user={user} />}
-          {view === "goals" && <Goals user={user} />}
-          {view === "photos" && <Photos user={user} />}
-          {view === "ai" && <AIPlans user={user} />}
-          {view === "plan" && <PlanContent />}
-        </div>
+        {authError && needsAuth && (
+          <div className="mx-4 sm:mx-6 mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-200 text-sm px-4 py-3">
+            Cloud sync is off: enable <strong>Anonymous sign-ins</strong> in Supabase
+            Auth → Providers to save your data.
+          </div>
+        )}
+        <div className="p-4 sm:p-6 max-w-5xl mx-auto animate-fade-up">{renderView()}</div>
       </main>
     </div>
   );
