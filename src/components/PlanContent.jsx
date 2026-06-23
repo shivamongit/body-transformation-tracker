@@ -1,19 +1,26 @@
 import { useState } from "react";
-import { Map, Dumbbell, Salad, ScanLine } from "lucide-react";
+import { Map, Dumbbell, Salad, ScanLine, ImageOff } from "lucide-react";
 import { priorities, roadmap, principles, workouts, diet, profile } from "../data/plan";
 import { SectionTitle } from "./ui";
-import front from "../../IMG_1546.PNG";
-import sideR from "../../IMG_1542.PNG";
-import sideL from "../../IMG_1545.PNG";
-import backRaised from "../../IMG_1543.PNG";
-import backRelaxed from "../../IMG_1544.PNG";
+
+// Personal reference photos are kept out of version control (see /private,
+// which is gitignored). They are loaded optionally at build time, so the app
+// builds and runs fine for anyone who clones the repo without them.
+const PRIVATE = import.meta.glob("../../private/*.{PNG,png,jpg,jpeg,JPG,JPEG,webp}", {
+  eager: true,
+  import: "default",
+});
+const pic = (name) => {
+  const hit = Object.keys(PRIVATE).find((k) => k.includes(`/${name}.`));
+  return hit ? PRIVATE[hit] : null;
+};
 
 const PHOTOS = [
-  { src: front, label: "Front View", notes: ["Central body fat (~26%)", "Flat/underdeveloped chest", "Narrow delts", "Thin arms"] },
-  { src: sideR, label: "Side Profile (Right)", notes: ["Protruding abdomen", "Anterior pelvic tilt", "Forward head posture", "Rounded shoulders"] },
-  { src: sideL, label: "Side Profile (Left)", notes: ["Confirms anterior pelvic tilt", "Belly protrusion", "Forward head + rounded shoulders"] },
-  { src: backRaised, label: "Back — Arms Raised", notes: ["No lat width (no V-taper)", "Underdeveloped upper back", "Rear delts absent"] },
-  { src: backRelaxed, label: "Back — Relaxed", notes: ["Love handles", "Narrow back taper", "Mild shoulder asymmetry"] },
+  { src: pic("front"), label: "Front View", notes: ["Central body fat (~26%)", "Flat/underdeveloped chest", "Narrow delts", "Thin arms"] },
+  { src: pic("side-right"), label: "Side Profile (Right)", notes: ["Protruding abdomen", "Anterior pelvic tilt", "Forward head posture", "Rounded shoulders"] },
+  { src: pic("side-left"), label: "Side Profile (Left)", notes: ["Confirms anterior pelvic tilt", "Belly protrusion", "Forward head + rounded shoulders"] },
+  { src: pic("back-raised"), label: "Back — Arms Raised", notes: ["No lat width (no V-taper)", "Underdeveloped upper back", "Rear delts absent"] },
+  { src: pic("back-relaxed"), label: "Back — Relaxed", notes: ["Love handles", "Narrow back taper", "Mild shoulder asymmetry"] },
 ];
 
 const TABS = [
@@ -66,7 +73,16 @@ export default function PlanContent() {
           <div className="grid sm:grid-cols-2 gap-3">
             {PHOTOS.map((p) => (
               <div key={p.label} className="card !p-0 overflow-hidden">
-                <img src={p.src} alt={p.label} className="w-full aspect-[3/4] object-cover" loading="lazy" />
+                {p.src ? (
+                  <img src={p.src} alt={p.label} className="w-full aspect-[3/4] object-cover" loading="lazy" />
+                ) : (
+                  <div className="w-full aspect-[3/4] bg-base-lowest grid place-items-center text-text-muted">
+                    <div className="text-center px-4">
+                      <ImageOff size={28} className="mx-auto mb-2 opacity-50" />
+                      <p className="text-xs">Add <code className="text-accent">private/{p.label.toLowerCase().includes("front") ? "front" : p.label.toLowerCase().includes("right") ? "side-right" : p.label.toLowerCase().includes("left") ? "side-left" : p.label.toLowerCase().includes("raised") ? "back-raised" : "back-relaxed"}.jpg</code></p>
+                    </div>
+                  </div>
+                )}
                 <div className="p-4">
                   <div className="font-medium text-text-primary mb-2">{p.label}</div>
                   <ul className="space-y-1">

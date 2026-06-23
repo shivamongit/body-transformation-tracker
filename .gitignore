@@ -5,3 +5,10 @@ dist/
 .env
 *.log
 stitch/
+
+# Personal / private content — never commit body photos
+private/
+/IMG_*.PNG
+/IMG_*.png
+/IMG_*.jpg
+/IMG_*.jpeg

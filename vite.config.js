@@ -9,4 +9,17 @@ export default defineConfig({
   base,
   plugins: [react()],
   assetsInclude: ["**/*.PNG"],
+  build: {
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom"],
+          charts: ["recharts"],
+          supabase: ["@supabase/supabase-js"],
+          icons: ["lucide-react"],
+        },
+      },
+    },
+  },
 });

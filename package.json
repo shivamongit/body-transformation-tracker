@@ -3,6 +3,23 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "description": "FORGE — an open-source, AI-powered body recomposition tracker. Log daily check-ins, set goals, track progress photos, and generate training plans. Built with React, Vite, Tailwind and Supabase.",
+  "license": "MIT",
+  "homepage": "https://shivamongit.github.io/body-transformation-tracker/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shivamongit/body-transformation-tracker.git"
+  },
+  "keywords": [
+    "fitness",
+    "body-recomposition",
+    "workout-tracker",
+    "react",
+    "vite",
+    "tailwindcss",
+    "supabase",
+    "openai"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",

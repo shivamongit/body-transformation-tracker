@@ -1,21 +1,21 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Target,
   Camera,
   Dumbbell,
   Sparkles,
-  Activity,
   Menu,
   X,
 } from "lucide-react";
 import { ensureGuestSession, supabase } from "./lib/supabase";
 import { Spinner } from "./components/ui";
-import Dashboard from "./components/Dashboard";
-import Goals from "./components/Goals";
-import Photos from "./components/Photos";
-import AIPlans from "./components/AIPlans";
-import PlanContent from "./components/PlanContent";
+
+const Dashboard = lazy(() => import("./components/Dashboard"));
+const Goals = lazy(() => import("./components/Goals"));
+const Photos = lazy(() => import("./components/Photos"));
+const AIPlans = lazy(() => import("./components/AIPlans"));
+const PlanContent = lazy(() => import("./components/PlanContent"));
 
 const NAV = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, title: "Performance Overview", desc: "Real-time physiological progress tracking." },
@@ -167,7 +167,15 @@ export default function App() {
             </div>
           )}
 
-          {renderView()}
+          <Suspense
+            fallback={
+              <div className="flex items-center gap-3 text-text-secondary py-16 justify-center">
+                <Spinner /> Loading…
+              </div>
+            }
+          >
+            {renderView()}
+          </Suspense>
         </div>
       </main>
     </div>
